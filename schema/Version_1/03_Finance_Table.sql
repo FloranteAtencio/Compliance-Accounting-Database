@@ -294,16 +294,16 @@ CREATE TABLE IF NOT EXISTS Finance.event_log (
 );    
 
 
-DROP TABLE IF EXISTS 
+DROP TABLE IF EXISTS Finance.ar_product_line CASCADE;
 CREATE TABLE IF NOT EXISTS Finance.ar_product_line(
 
-    ar_line_id BIGSERIAL PRIMARY KEY
+    ar_line_id BIGSERIAL PRIMARY KEY,
     invoice_id TEXT,
     product_id INT NOT NULL REFERENCES Finance.products(product_id),
-    receivable_id INT NOT NULL REFERENCES Finance.acount_receivables(receivable_id) ON DELETE NO ACTION,
+    receivable_id INT NOT NULL REFERENCES Finance.account_receivables(receivable_id) ON DELETE NO ACTION,
     quantity INT,
     discount DECIMAL(10,2),
-    UNIQUE(invoice_id)
+    UNIQUE(invoice_id,ar_line_id)
 
 );
 

@@ -21,16 +21,16 @@ BEGIN
 
     PERFORM 1 FROM Audit.import_sessions a where a.session_id = p_session_id;
 
-    INSERT INTO Staging.import_approvals (session_id, staging_record_id,approval_status,approval_level,approved_by)
+    INSERT INTO Audit.import_approvals (session_id, staging_record_id,approval_status,approval_level,approved_by)
     SELECT  a.session_id,
             a.staging_record_id,
             'APPROVE_L1',
             1,
             p_approve_by
-    FROM Staging.import_workflows a 
+    FROM Audit.import_workflows a 
     WHERE a.new_state = 'VALID' AND a.session_id = new_session_id;
 
-    UPDATE Staging.import_workflows
+    UPDATE Audit.import_workflows
     SET new_state = 'APPROVE_L1',
         previous_state = 'VALID'
     WHERE session_id = new_session_id AND new_state = 'VALID';
@@ -63,14 +63,14 @@ BEGIN
 
     PERFORM 1 FROM Audit.import_sessions a where a.session_id = p_session_id;
 
-    UPDATE Staging.import_approvals
+    UPDATE Audit.import_approvals
     SET
         approval_status = 'APPROVE_L2',
         approval_level = 2,
         approved_by = p_approve_by
     WHERE approval_status = 'APPROVE_L1' AND session_id = new_session_id;
 
-    UPDATE Staging.import_workflows
+    UPDATE Audit.import_workflows
     SET new_state = 'APPROVE_L2',
         previous_state = 'APPROVE_L1'
     WHERE session_id = new_session_id AND new_state = 'APPROVE_L1';
@@ -103,14 +103,14 @@ BEGIN
 
     PERFORM 1 FROM Audit.import_sessions a where a.session_id = p_session_id;
     
-    UPDATE Staging.import_approvals
+    UPDATE Audit.import_approvals
     SET
         approval_status = 'APPROVE_L3',
         approval_level = 3,
         approved_by = p_approve_by
     WHERE approval_status = 'APPROVE_L2' AND session_id = new_session_id;
 
-    UPDATE Staging.import_workflows
+    UPDATE Audit.import_workflows
     SET new_state = 'APPROVE_L3',
         previous_state = 'APPROVE_L2'
     WHERE session_id = new_session_id AND new_state = 'APPROVE_L2';
@@ -120,7 +120,6 @@ EXCEPTION
         RAISE EXCEPTION 'Staging import approval_l3 failed : %', SQLERRM;
 END;
 $$ SECURITY DEFINER SET search_path = Finance, Audit, Compliance, Security, Staging, pg_catalog;
-
 
 COMMIT;
 

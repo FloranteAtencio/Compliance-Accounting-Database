@@ -73,38 +73,38 @@ CREATE TABLE Finance.column_classification (
     UNIQUE(table_name, column_name)
 );
 
--- ============================================
--- 5. ENHANCED EVENT LOG (with compliance fields)
--- ============================================
--- NOTE: Enhance existing Finance.event_log table
-DROP TABLE IF EXISTS Finance.event_log_enhanced CASCADE;
-CREATE TABLE Finance.event_log_enhanced (
-    event_id BIGSERIAL PRIMARY KEY,
-    event_type VARCHAR(50) NOT NULL,
-    table_name VARCHAR(255),
-    operation VARCHAR(10),  -- INSERT, UPDATE, DELETE
-    record_id BIGINT,
-    user_id VARCHAR(255),
-    user_role VARCHAR(100),
-    old_values JSONB,
-    new_values JSONB,
-    payload JSONB NOT NULL,
-    status VARCHAR(20) DEFAULT 'PENDING',
-    compliance_level data_classification_enum,
-    idempotency_key TEXT UNIQUE NOT NULL,
-    hash_chain TEXT,  -- For audit chain verification
-    ip_address INET,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    processed_at TIMESTAMP,
-    archived_at TIMESTAMP,
-    CONSTRAINT event_log_status_check CHECK (status IN ('PENDING', 'PROCESSED', 'ARCHIVED', 'FAILED'))
-);
+-- -- ============================================
+-- -- 5. ENHANCED EVENT LOG (with compliance fields)
+-- -- ============================================
+-- -- NOTE: Enhance existing Finance.event_log table
+-- DROP TABLE IF EXISTS Finance.event_log_enhanced CASCADE;
+-- CREATE TABLE Finance.event_log_enhanced (
+--     event_id BIGSERIAL PRIMARY KEY,
+--     event_type VARCHAR(50) NOT NULL,
+--     table_name VARCHAR(255),
+--     operation VARCHAR(10),  -- INSERT, UPDATE, DELETE
+--     record_id BIGINT,
+--     user_id VARCHAR(255),
+--     user_role VARCHAR(100),
+--     old_values JSONB,
+--     new_values JSONB,
+--     payload JSONB NOT NULL,
+--     status VARCHAR(20) DEFAULT 'PENDING',
+--     compliance_level data_classification_enum,
+--     idempotency_key TEXT UNIQUE NOT NULL,
+--     hash_chain TEXT,  -- For audit chain verification
+--     ip_address INET,
+--     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+--     processed_at TIMESTAMP,
+--     archived_at TIMESTAMP,
+--     CONSTRAINT event_log_status_check CHECK (status IN ('PENDING', 'PROCESSED', 'ARCHIVED', 'FAILED'))
+-- );
 
--- Create index for faster querying
-CREATE INDEX idx_event_log_created_at ON Finance.event_log_enhanced(created_at DESC);
-CREATE INDEX idx_event_log_table_name ON Finance.event_log_enhanced(table_name);
-CREATE INDEX idx_event_log_user_id ON Finance.event_log_enhanced(user_id);
-CREATE INDEX idx_event_log_compliance ON Finance.event_log_enhanced(compliance_level);
+-- -- Create index for faster querying
+-- CREATE INDEX idx_event_log_created_at ON Finance.event_log_enhanced(created_at DESC);
+-- CREATE INDEX idx_event_log_table_name ON Finance.event_log_enhanced(table_name);
+-- CREATE INDEX idx_event_log_user_id ON Finance.event_log_enhanced(user_id);
+-- CREATE INDEX idx_event_log_compliance ON Finance.event_log_enhanced(compliance_level);
 
 -- ============================================
 -- 6. AUDIT TRAIL TABLE

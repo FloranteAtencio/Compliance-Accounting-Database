@@ -14,7 +14,7 @@ BEGIN
     FOR r IN
         SELECT a.*
         FROM Staging.stg_ar_imports a
-        LEFT JOIN Staging.import_workflows b ON a.id = b.staging_record_id 
+        LEFT JOIN Audit.import_workflows b ON a.id = b.staging_record_id 
         WHERE a.session_id = p_session_id
           AND validation_status = 'VALID'
           AND b.new_state = 'APPROVE_L3'
@@ -71,7 +71,7 @@ BEGIN
     -- IF current_setting('app.import_session_id', TRUE) IS NOT NULL THEN
 
 
-    UPDATE Staging.import_workflows
+    UPDATE Audit.import_workflows
     SET new_state = 'POSTED',
         previous_state = 'APPROVE_L3'
     WHERE session_id = p_session_id AND new_state = 'APPROVE_L3';

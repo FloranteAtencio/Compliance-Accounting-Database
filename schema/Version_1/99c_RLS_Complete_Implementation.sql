@@ -32,7 +32,7 @@ CREATE ROLE auditor_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword000!';
 -- ============================================
 
 -- Grant usage on schemas
-GRANT USAGE ON SCHEMA Finance, Audit, Compliance, Staging, Security TO app_user, readonly_user, auditor_user;
+GRANT USAGE ON SCHEMA Finance, Audit, Compliance, Staging TO app_user, readonly_user, auditor_user;
 
 -- Grant table privileges to app_user (needed for RLS to work)
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA Finance TO app_user;
@@ -411,21 +411,21 @@ COMMIT;
 -- Run these commands to verify RLS is working
 
 -- 1. Create test clients
-INSERT INTO Finance.clients (client_id, info) VALUES (1, '{"name": "Client A"}');
-INSERT INTO Finance.clients (client_id, info) VALUES (2, '{"name": "Client B"}');
+-- INSERT INTO Finance.clients (client_id, info) VALUES (1, '{"name": "Client A"}');
+-- INSERT INTO Finance.clients (client_id, info) VALUES (2, '{"name": "Client B"}');
 
--- 2. Test as app_user for Client A
-SET ROLE app_user;
-SET app.current_client_id = '1';
-SELECT * FROM Finance.clients;  -- Should only show client_id = 1
+-- -- 2. Test as app_user for Client A
+-- SET ROLE app_user;
+-- SET app.current_client_id = '1';
+-- SELECT * FROM Finance.clients;  -- Should only show client_id = 1
 
--- 3. Try to access Client B data (should return nothing)
-SELECT * FROM Finance.clients WHERE client_id = 2;  -- Should return 0 rows
+-- -- 3. Try to access Client B data (should return nothing)
+-- SELECT * FROM Finance.clients WHERE client_id = 2;  -- Should return 0 rows
 
--- 4. Switch to Client B context
-SET app.current_client_id = '2';
-SELECT * FROM Finance.clients;  -- Should only show client_id = 2
+-- -- 4. Switch to Client B context
+-- SET app.current_client_id = '2';
+-- SELECT * FROM Finance.clients;  -- Should only show client_id = 2
 
--- 5. Reset to superuser
-RESET ROLE;
-RESET app.current_client_id;
+-- -- 5. Reset to superuser
+-- RESET ROLE;
+-- RESET app.current_client_id;

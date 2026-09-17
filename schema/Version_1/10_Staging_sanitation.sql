@@ -106,7 +106,7 @@ BEGIN
 
     END LOOP;
 
-    UPDATE Staging.import_workflows a
+    UPDATE Audit.import_workflows a
     SET
         new_state = 'PENDING',
         previous_state = 'DRAFT',
@@ -187,7 +187,7 @@ BEGIN
 
     END LOOP;
 
-    UPDATE Staging.import_workflows a
+    UPDATE Audit.import_workflows a
     SET
         new_state = 'PENDING',
         previous_state = 'DRAFT',
@@ -242,12 +242,11 @@ BEGIN
     IF table_related = 'Staging.stg_ar_imports' THEN
         CALL Staging.ar_sanitation(new_session_id);
 
-        IF table_related = 'Staging.stg_ar_lines' THEN
+    ELSEIF table_related = 'Staging.stg_ar_lines' THEN
         CALL Staging.ar_line_sanitation(new_session_id);
 
     ELSIF table_related = 'stg_other_table' THEN
         RAISE EXCEPTION 'Sanitation logic for stg_other_table is not yet implemented.';
-            
     END IF;
 
  -- Ensure we only update records for this session

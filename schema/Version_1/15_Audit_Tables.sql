@@ -17,7 +17,6 @@ CREATE TABLE IF NOT EXISTS Audit.audit_logs (
     row_hash TEXT
 );
 
-
 DROP TABLE IF EXISTS Audit.audit_logs_extended CASCADE;
 CREATE TABLE Audit.audit_logs_extended (
     extended_audit_id BIGSERIAL PRIMARY KEY,
@@ -53,6 +52,7 @@ CREATE TABLE Audit.import_sessions (
     notes TEXT
 );
 
+
 DROP TABLE IF EXISTS Audit.import_detail_logs CASCADE;
 CREATE TABLE Audit.import_detail_logs (
     detail_id BIGSERIAL PRIMARY KEY,
@@ -66,6 +66,7 @@ CREATE TABLE Audit.import_detail_logs (
     created_record_id INT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 DROP TABLE IF EXISTS Audit.import_validation_log CASCADE;
 CREATE TABLE Audit.import_validation_log (
@@ -82,6 +83,36 @@ CREATE TABLE Audit.import_validation_log (
 );
 
 -- =========================================================
+-- Staging  
+-- Audit
+-- Trail
+-- =========================================================
+
+-- 2. WORKFLOW TABLE
+CREATE TABLE IF NOT EXISTS Audit.import_workflows (
+    session_id INT,
+    staging_record_id BIGINT,
+    staging_table VARCHAR(50),
+    previous_state VARCHAR(50),
+    new_state VARCHAR(50),
+    changed_by VARCHAR(100),
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notes TEXT
+);
+
+-- 3. APPROVAL TABLE
+CREATE TABLE IF NOT EXISTS Audit.import_approvals (
+    session_id INT,
+    staging_record_id BIGINT,   
+    approval_level SMALLINT,
+    approval_status VARCHAR(20),
+    approved_by VARCHAR(100),
+    approved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    comments TEXT
+);
+
+-- =========================================================
+-- Production  
 -- Audit
 -- Trail
 -- =========================================================
@@ -102,7 +133,6 @@ CREATE TABLE Audit.transaction_lifecycle (
     notes TEXT
 );
 
-
 DROP TABLE IF EXISTS Audit.approval_chain CASCADE;
 CREATE TABLE Audit.approval_chain (
     approval_id BIGSERIAL PRIMARY KEY,
@@ -117,7 +147,6 @@ CREATE TABLE Audit.approval_chain (
     required_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
 
 DROP TABLE IF EXISTS Audit.reconciliation_tracking CASCADE;
 CREATE TABLE Audit.reconciliation_tracking (
@@ -135,7 +164,6 @@ CREATE TABLE Audit.reconciliation_tracking (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
 );
-
 
 DROP TABLE IF EXISTS Audit.record_lineage CASCADE;
 CREATE TABLE Audit.record_lineage (

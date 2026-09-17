@@ -1,10 +1,11 @@
 # 🧠 Accounting Database System (PostgreSQL)
 
-A modular **Accounting database system** designed to handle inventory, sales, and financial transactions and more using PostgreSQL.
+A modular **Accounting database system** designed to handle Account Receivables , and financial transactions and more using PostgreSQL.
 
 ---
 
 ## 🚀 Features
+
 
 * 💰 **Accounting System**
 
@@ -21,9 +22,19 @@ A modular **Accounting database system** designed to handle inventory, sales, an
   * Multiple Clients can simultaneously operate 
   * Multiple Chart of account custom made for every Clients needs
 
+* ⚙️ **Stored Procedures (PL/pgSQL)**
+
+  * Centralized transaction processing
+  * Modular design (Inventory + Accounting modules)
+
 * 🧩 **Partitioned Tables**
 
   * Scalable handling of financial data using date-based partitioning
+
+* 📊 **Reporting & Dashboard Queries**
+
+  * Revenue and profit
+  * Aging reports (AR/AP)
 
 * 🫆 **Audit Logs / Extended Audit Logs**
 
@@ -36,10 +47,11 @@ A modular **Accounting database system** designed to handle inventory, sales, an
   * Transaction Life Cycle
   * Import Session
 
-* 📝 **Compliance**
+* 📝 **Compliance and Metadata**
   
   * Compliance log
   * import compliance log
+  * policies for each table and column
 
 * 🗂 **Staging**
   
@@ -53,6 +65,11 @@ A modular **Accounting database system** designed to handle inventory, sales, an
    * Prevent direct operation to table
    * Need specific setting to perform CRUD Operations
 
+* 🔄 **Data Life cycle metadata**
+    * History of entire data cycle  
+
+* 📁 **Data  Governance**
+    * regulation, authority, rules, confidentiality of data.
 ---
 
 ## 🏗️ System Architecture
@@ -340,7 +357,7 @@ accounting-database/
 ```
 ---
 
-## 🧠 Key Concepts Demonstrated
+## 🧠 Key Demonstrated
 
 * Relational Database Design (Normalization, Constraints)
 * Partitioning Strategy (Range Partitioning by Date)
@@ -349,12 +366,16 @@ accounting-database/
 * Financial Data Modeling (ERP-style logic)
 * Query Optimization using Indexes
 * Modular Stored Procedure Design
-* Audit Logs for Every success Operations
+* Audit Logs and Trails for Every success Operations
 * Recording Data Lineage (From Staging to Production)
 * Idempotency key for avoid duplicate transactions
 * Code Hashing Chain to spot tampering
 * Sanitation, Validation and Approval Chain at Staging 
 * Trigger Guard Prevent bypassing validation and ensures every transaction follow the approved workflow
+* Write Only Read Many 
+* Data Complinace logs and metdata for each table and rows (rentention, encryption, pii_present, finance_data, data_steward, gpdr, ph_data_privacy)
+* Data Governance set regulation on each data (handle, role, owners, custodians, domain, classification and sensitivity)
+* Data Lifecycle (ingestion, staging, process, archive, retension, deletions, data lineage)
 
 ---
 
@@ -362,9 +383,7 @@ accounting-database/
 
 This system simulates a real Accounting backend where:
 
-* Inventory transactions automatically affect financial records
 * Sales generate accounts receivable
-* Purchases generate accounts payable
 * Financial reports can be derived from journal entries
 * Record Data Lineage From Staging to Production to Archive
 * Multiple Tenant and custom made Chart of Account
@@ -405,7 +424,7 @@ BACKUP / RECOVERY
         └── Bash + Cron
         │
         ↓
-⭐ PERFORMANCE / MAINTENANCE 
+PERFORMANCE / MAINTENANCE 
         │
         ├── VACUUM
         ├── ANALYZE
@@ -415,6 +434,18 @@ BACKUP / RECOVERY
         ├── Index Optimization
         ├── Locks / Blocking
         └── Monitoring
+        │
+        ↓
+Data Governance/Compliance 
+        │
+        ├── Data Lifecycle
+        ├── Data Stewards
+        ├── Data Inventory
+        ├── Data Mapping
+        ├── Data Compliance
+        ├── Data Quality
+        ├── Database Security
+        └── Data Classification
         │
         ↓
 DATA WAREHOUSING  ← NEXT

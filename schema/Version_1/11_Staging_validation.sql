@@ -36,7 +36,7 @@ BEGIN
             c.row_number, 
             c.table_name
         FROM Staging.stg_ar_imports a
-        LEFT JOIN Staging.import_workflows b ON a.id = b.staging_record_id 
+        LEFT JOIN Audit.import_workflows b ON a.id = b.staging_record_id 
         LEFT JOIN Audit.import_detail_logs c ON a.id = c.created_record_id
         WHERE a.session_id = p_session_id AND b.new_state = 'PENDING' -- Fixed: Handle case where workflow row might not exist yet
     
@@ -218,13 +218,13 @@ BEGIN
            AND z.customer_error IS NULL 
            AND z.status_error IS NULL THEN
             
-            UPDATE Staging.import_workflows 
+            UPDATE Audit.import_workflows 
             SET 
                 new_state = 'VALID',
                 previous_state = 'PENDING',
                 notes = 'PENDING FOR APPROVAL'
-            WHERE Staging.import_workflows.session_id = r.session_id
-              AND Staging.import_workflows.staging_record_id = r.id;
+            WHERE Audit.import_workflows.session_id = r.session_id
+              AND Audit.import_workflows.staging_record_id = r.id;
         END IF;
     
     END LOOP;    

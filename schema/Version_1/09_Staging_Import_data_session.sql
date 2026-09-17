@@ -38,7 +38,7 @@ BEGIN
     VALUES ( p_session_id, p_client_id, p_customer_id, p_invoice_date,  p_due_date, p_amount, p_status, 'DRAFT', NULL, NOW())
     RETURNING id INTO new_ar_staging_id;
 
-    INSERT INTO Staging.import_workflows
+    INSERT INTO Audit.import_workflows
     (session_id, staging_record_id, staging_table,previous_state, new_state, changed_by)
     VALUES(p_session_id, new_ar_staging_id, 'ar_import_data',NULL, 'DRAFT',current_user);
 
@@ -78,7 +78,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = Finance, Audit, Compliance, Security, Staging, pg_catalog;
 
 DROP FUNCTION IF EXISTS Staging.ar_product_line(int,TEXT,TEXT,TEXT,TEXT) CASCADE;
-CREATE Function IF NOT EXISTS Staging.ar_product_line(
+CREATE Function Staging.ar_product_line(
     p_session_id INT,
     p_invoice_code TEXT,
     p_product_code TEXT,
@@ -87,7 +87,7 @@ CREATE Function IF NOT EXISTS Staging.ar_product_line(
 )
 RETURNS INT AS $$
 DECLARE 
-    new_ar_staging_id INT
+    new_ar_staging_id INT;
 BEGIN
     INSERT INTO Staging.ar_product_line(
         session_id,
@@ -110,7 +110,7 @@ BEGIN
         NOW()
     ) RETURNING id INTO new_ar_staging_id;
 
-    INSERT INTO Staging.import_workflows
+    INSERT INTO Audit.import_workflows
     (session_id, staging_record_id, staging_table,previous_state, new_state, changed_by)
     VALUES(p_session_id, new_ar_staging_id, 'ar_product_line',NULL, 'DRAFT',current_user);
 

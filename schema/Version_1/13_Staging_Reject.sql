@@ -19,7 +19,7 @@ BEGIN
 
     PERFORM 1 FROM Audit.import_sessions WHERE session_id = p_session_id;
 
-    UPDATE Staging.import_workflows a
+    UPDATE Audit.import_workflows a
     SET
         new_state = 'REJECT',
         previous_state = 'DRAFT'

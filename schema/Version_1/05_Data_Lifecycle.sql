@@ -28,7 +28,7 @@ CREATE TABLE Finance.data_retention_policy (
     policy_id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL UNIQUE,
     table_description TEXT,
-    retention_period_days INT NOT NULL,
+    retention_period_days INT,-- NOT NULL,
     retention_category VARCHAR(100),  -- PERMANENT, FINANCIAL, OPERATIONAL, TEMPORARY, LOGS
     archive_after_days INT,            -- When to archive (before delete)
     warm_storage_after_days INT,       -- When to move to slower storage
