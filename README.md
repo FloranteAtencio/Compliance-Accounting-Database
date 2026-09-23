@@ -79,7 +79,7 @@ A modular **Accounting database system** designed to handle Account Receivables 
     ↓ ---------------> [log the import details in summary and every succes/fail transaction]
 
 
-[Staging] ----------------> [log to import workflows status]
+[Staging] ----------------> [log to import workflows status ,Record Lineage]
    
 
     ↓ ---------------> [update the import workflow status]
