@@ -64,10 +64,7 @@ A modular **Accounting database system** designed to handle Account Receivables 
 
    * Prevent direct operation to table
    * Need specific setting to perform CRUD Operations
-
-* 🔄 **Data Life cycle metadata**
-    * History of entire data cycle  
-
+  
 * 📁 **Data  Governance**
     * regulation, authority, rules, confidentiality of data.
 ---
