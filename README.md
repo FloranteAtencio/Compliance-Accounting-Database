@@ -372,7 +372,7 @@ accounting-database/
 * Write Only Read Many 
 * Data Complinace logs and metdata for each table and rows (rentention, encryption, pii_present, finance_data, data_steward, gpdr, ph_data_privacy)
 * Data Governance set regulation on each data (handle, role, owners, custodians, domain, classification and sensitivity)
-* Data Lifecycle (ingestion, staging, process, archive, retension, deletions, data lineage)
+* Data management
 
 ---
 
