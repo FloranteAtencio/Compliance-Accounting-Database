@@ -36,8 +36,8 @@ CREATE TYPE retention_period_enum AS ENUM (
 -- ============================================
 -- 3. COMPLIANCE METADATA TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.compliance_metadata CASCADE;
-CREATE TABLE Finance.compliance_metadata (
+DROP TABLE IF EXISTS Compliance.compliance_metadata CASCADE;
+CREATE TABLE Compliance.compliance_metadata (
     metadata_id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL UNIQUE,
     table_description TEXT,
@@ -58,8 +58,8 @@ CREATE TABLE Finance.compliance_metadata (
 -- ============================================
 -- 8. FIELD-LEVEL ENCRYPTION KEYS TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.encryption_keys CASCADE;
-CREATE TABLE Finance.encryption_keys (
+DROP TABLE IF EXISTS Compliance.encryption_keys CASCADE;
+CREATE TABLE Compliance.encryption_keys (
     key_id BIGSERIAL PRIMARY KEY,
     key_name VARCHAR(255) NOT NULL UNIQUE,
     table_name VARCHAR(255) NOT NULL,
@@ -77,8 +77,8 @@ CREATE TABLE Finance.encryption_keys (
 -- ============================================
 -- 9. DATA RETENTION POLICY TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.retention_policy CASCADE;
-CREATE TABLE Finance.retention_policy (
+DROP TABLE IF EXISTS Compliance.retention_policy CASCADE;
+CREATE TABLE Compliance.retention_policy (
     policy_id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL,
     retention_period retention_period_enum NOT NULL,
@@ -95,10 +95,10 @@ CREATE TABLE Finance.retention_policy (
 -- ============================================
 -- 10. CONSENT & PII MANAGEMENT TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.pii_consent CASCADE;
-CREATE TABLE Finance.pii_consent (
+DROP TABLE IF EXISTS Compliance.pii_consent CASCADE;
+CREATE TABLE Compliance.pii_consent (
     consent_id BIGSERIAL PRIMARY KEY,
-    client_id INT NOT NULL REFERENCES Finance.clients(client_id) ON DELETE NO ACTION,
+    client_id INT NOT NULL REFERENCES Compliance.clients(client_id) ON DELETE NO ACTION,
     consent_type VARCHAR(100),  -- MARKETING, ANALYTICS, PROCESSING, etc
     consent_given BOOLEAN NOT NULL,
     consent_date TIMESTAMP NOT NULL,
@@ -107,13 +107,13 @@ CREATE TABLE Finance.pii_consent (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_pii_consent_client ON Finance.pii_consent(client_id);
+CREATE INDEX idx_pii_consent_client ON Compliance.pii_consent(client_id);
 
 -- ============================================
 -- 11. COMPLIANCE AUDIT CHECKLIST
 -- ============================================
-DROP TABLE IF EXISTS Finance.compliance_checklist CASCADE;
-CREATE TABLE Finance.compliance_checklist (
+DROP TABLE IF EXISTS Compliance.compliance_checklist CASCADE;
+CREATE TABLE Compliance.compliance_checklist (
     checklist_id BIGSERIAL PRIMARY KEY,
     framework VARCHAR(100),  -- GDPR, PH_PDATA, ISO_27001, etc
     requirement_id VARCHAR(50),
@@ -132,8 +132,8 @@ CREATE TABLE Finance.compliance_checklist (
 -- ============================================
 -- 12. SECURITY INCIDENT LOG
 -- ============================================
-DROP TABLE IF EXISTS Finance.security_incident CASCADE;
-CREATE TABLE Finance.security_incident (
+DROP TABLE IF EXISTS Compliance.security_incident CASCADE;
+CREATE TABLE Compliance.security_incident (
     incident_id BIGSERIAL PRIMARY KEY,
     incident_type VARCHAR(100),  -- UNAUTHORIZED_ACCESS, DATA_BREACH, etc
     severity VARCHAR(20),  -- CRITICAL, HIGH, MEDIUM, LOW
@@ -152,7 +152,7 @@ CREATE TABLE Finance.security_incident (
 );
 
 -- Sensitive Tables
-INSERT INTO Finance.compliance_metadata 
+INSERT INTO Compliance.compliance_metadata 
 (table_name, table_description, data_classification, retention_period, requires_encryption, pii_present, financial_data, data_steward, gdpr_applicable, ph_pdata_applicable)
 VALUES
 ('clients', 'Client master data with contact information', 'SENSITIVE', '7_YEARS', TRUE, TRUE, FALSE, 'Finance Manager', TRUE, TRUE),

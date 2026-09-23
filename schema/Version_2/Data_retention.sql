@@ -25,8 +25,8 @@ CREATE TYPE retention_action_enum AS ENUM (
 -- ============================================
 -- 2. DATA RETENTION POLICY TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.data_retention_policy CASCADE;
-CREATE TABLE Finance.data_retention_policy (
+DROP TABLE IF EXISTS Compliance.data_retention_policy CASCADE;
+CREATE TABLE Compliance.data_retention_policy (
     policy_id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL UNIQUE,
     table_description TEXT,
@@ -52,8 +52,8 @@ CREATE TABLE Finance.data_retention_policy (
 -- ============================================
 -- 4. ARCHIVE TABLES METADATA
 -- ============================================
-DROP TABLE IF EXISTS Finance.archive_metadata CASCADE;
-CREATE TABLE Finance.archive_metadata (
+DROP TABLE IF EXISTS Compliance.archive_metadata CASCADE;
+CREATE TABLE Compliance.archive_metadata (
     archive_id BIGSERIAL PRIMARY KEY,
     source_table_name VARCHAR(255) NOT NULL,
     archive_table_name VARCHAR(255) NOT NULL,
@@ -73,16 +73,16 @@ CREATE TABLE Finance.archive_metadata (
     purged_at TIMESTAMP
 );
 
-CREATE INDEX idx_archive_source_table ON Finance.archive_metadata(source_table_name);
-CREATE INDEX idx_archive_date ON Finance.archive_metadata(archive_date DESC);
+CREATE INDEX idx_archive_source_table ON Compliance.archive_metadata(source_table_name);
+CREATE INDEX idx_archive_date ON Compliance.archive_metadata(archive_date DESC);
 
 -- ============================================
 -- 7. RETENTION EXCEPTION TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.retention_exceptions CASCADE;
-CREATE TABLE Finance.retention_exceptions (
+DROP TABLE IF EXISTS Compliance.retention_exceptions CASCADE;
+CREATE TABLE Compliance.retention_exceptions (
     exception_id BIGSERIAL PRIMARY KEY,
-    policy_id BIGINT NOT NULL REFERENCES Finance.data_retention_policy(policy_id),
+    policy_id BIGINT NOT NULL REFERENCES Compliance.data_retention_policy(policy_id),
     table_name VARCHAR(255) NOT NULL,
     record_id BIGINT,
     exception_type VARCHAR(100),       -- LEGAL_HOLD, LITIGATION, REGULATORY, AUDIT
@@ -97,14 +97,14 @@ CREATE TABLE Finance.retention_exceptions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_exception_table_name ON Finance.retention_exceptions(table_name);
-CREATE INDEX idx_exception_type ON Finance.retention_exceptions(exception_type);
+CREATE INDEX idx_exception_table_name ON Compliance.retention_exceptions(table_name);
+CREATE INDEX idx_exception_type ON Compliance.retention_exceptions(exception_type);
 
 -- ============================================
 -- 9. COMPLIANCE HOLD TABLE
 -- ============================================
-DROP TABLE IF EXISTS Finance.compliance_hold CASCADE;
-CREATE TABLE Finance.compliance_hold (
+DROP TABLE IF EXISTS Compliance.compliance_hold CASCADE;
+CREATE TABLE Compliance.compliance_hold (
     hold_id BIGSERIAL PRIMARY KEY,
     hold_name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
@@ -124,8 +124,8 @@ CREATE TABLE Finance.compliance_hold (
 -- ============================================
 -- 10. PURGE EXECUTION LOG
 -- ============================================
-DROP TABLE IF EXISTS Finance.purge_execution_log CASCADE;
-CREATE TABLE Finance.purge_execution_log (
+DROP TABLE IF EXISTS Compliance.purge_execution_log CASCADE;
+CREATE TABLE Compliance.purge_execution_log (
     purge_id BIGSERIAL PRIMARY KEY,
     table_name VARCHAR(255) NOT NULL,
     purge_type VARCHAR(50),            -- ARCHIVE, DELETE, BOTH
@@ -142,7 +142,7 @@ CREATE TABLE Finance.purge_execution_log (
     backup_created BOOLEAN DEFAULT FALSE,
     backup_verification_passed BOOLEAN DEFAULT FALSE,
     total_duration_seconds INT,
-    purge_policy_id BIGINT REFERENCES Finance.data_retention_policy(policy_id),
+    purge_policy_id BIGINT REFERENCES Compliance.data_retention_policy(policy_id),
     executed_by VARCHAR(255),
     approval_required BOOLEAN DEFAULT FALSE,
     approved_by VARCHAR(255),
@@ -150,16 +150,16 @@ CREATE TABLE Finance.purge_execution_log (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_purge_table_name ON Finance.purge_execution_log(table_name);
-CREATE INDEX idx_purge_status ON Finance.purge_execution_log(purge_status);
-CREATE INDEX idx_purge_created_at ON Finance.purge_execution_log(created_at DESC);
+CREATE INDEX idx_purge_table_name ON Compliance.purge_execution_log(table_name);
+CREATE INDEX idx_purge_status ON Compliance.purge_execution_log(purge_status);
+CREATE INDEX idx_purge_created_at ON Compliance.purge_execution_log(created_at DESC);
 
 -- ============================================
 -- POPULATE RETENTION POLICIES
 -- ============================================
 
 -- FINANCIAL DATA - 7 years (regulatory requirement)
-INSERT INTO Finance.data_retention_policy 
+INSERT INTO Compliance.data_retention_policy 
 (table_name, table_description, retention_period_days, retention_category, 
  archive_after_days, warm_storage_after_days, delete_enabled, delete_method, 
  soft_delete_column, archive_table_name, policy_notes)
