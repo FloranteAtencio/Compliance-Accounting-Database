@@ -13,18 +13,12 @@ constraint_exclusion = partition
 # ===== MEMORY & PERFORMANCE =====
 shared_buffers = 256MB
 effective_cache_size = 1GB
-work_mem = 64MB
+work_mem = 16MB                           # lower global default; bump per-session
 maintenance_work_mem = 64MB
 
 # ===== CONNECTIONS =====
 max_connections = 200
 
-# ===== LOGGING =====
-log_statement = 'all'
-log_min_duration_statement = 1000
-log_duration = on
-logging_collector = off
-timezone = 'UTC'
 # ===== CHECKPOINTS =====
 checkpoint_timeout = 15min
 checkpoint_completion_target = 0.9
@@ -46,8 +40,27 @@ log_statement = 'all'
 listen_addresses = '*'
 
 # ===== RECOVERY SETTINGS =====
-restore_command = 'cp /var/lib/postgresql/wal_archive/%f %p'
-recovery_target_time = '2026-08-12 18:21:22'  # <-- CHANGE THIS to your Baseline Time
-recovery_target_action = 'promote'
+#restore_command = 'cp /var/lib/postgresql/wal_archive/%f %p'
+#recovery_target_time = '2026-08-12 18:21:22'  # <-- CHANGE THIS to your Baseline Time
+#recovery_target_action = 'promote'
 #recovery_target_inclusive = 'true'
 
+# ===== LOGGING (fixed) =====
+log_statement = 'mod'
+log_min_duration_statement = 1000
+log_checkpoints = on
+log_line_prefix = '%m [%p] %q%u@%d '
+logging_collector = on                    # was off — otherwise logs vanish on crash
+log_timezone = 'UTC'
+
+# ===== LOGGING =====
+# log_statement = 'all'
+# log_min_duration_statement = 1000
+# log_duration = on
+# logging_collector = off
+# timezone = 'UTC'
+
+# ===== WAL/CHECKPOINTS (added) =====
+max_wal_size = 2GB
+min_wal_size = 800MB
+wal_keep_size = 2GB                       # or use replication slots instead
