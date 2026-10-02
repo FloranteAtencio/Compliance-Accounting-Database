@@ -1,7 +1,7 @@
 # ===== REPLICATION =====
 wal_level = replica
 max_wal_senders = 10
-wal_keep_size = 1GB
+# wal_keep_size = 1GB
 
 # Archiving
 archive_mode = on
@@ -34,7 +34,7 @@ random_page_cost = 1.1
 log_connections = on
 log_disconnections = on
 log_lock_waits = on
-log_statement = 'all'
+# log_statement = 'all'
 
 #=== local_host ==
 listen_addresses = '*'
@@ -53,14 +53,15 @@ log_line_prefix = '%m [%p] %q%u@%d '
 logging_collector = on                    # was off — otherwise logs vanish on crash
 log_timezone = 'UTC'
 
+# ===== WAL/CHECKPOINTS (added) =====
+max_wal_size = 2GB
+min_wal_size = 800MB
+wal_keep_size = 2GB                       # or use replication slots instead
+
+
 # ===== LOGGING =====
 # log_statement = 'all'
 # log_min_duration_statement = 1000
 # log_duration = on
 # logging_collector = off
 # timezone = 'UTC'
-
-# ===== WAL/CHECKPOINTS (added) =====
-max_wal_size = 2GB
-min_wal_size = 800MB
-wal_keep_size = 2GB                       # or use replication slots instead
