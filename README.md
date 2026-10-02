@@ -64,10 +64,7 @@ A modular **Accounting database system** designed to handle Account Receivables 
 
    * Prevent direct operation to table
    * Need specific setting to perform CRUD Operations
-
-* 🔄 **Data Life cycle metadata**
-    * History of entire data cycle  
-
+  
 * 📁 **Data  Governance**
     * regulation, authority, rules, confidentiality of data.
 ---
@@ -82,7 +79,7 @@ A modular **Accounting database system** designed to handle Account Receivables 
     ↓ ---------------> [log the import details in summary and every succes/fail transaction]
 
 
-[Staging] ----------------> [log to import workflows status]
+[Staging] ----------------> [log to import workflows status ,Record Lineage]
    
 
     ↓ ---------------> [update the import workflow status]
@@ -375,7 +372,7 @@ accounting-database/
 * Write Only Read Many 
 * Data Complinace logs and metdata for each table and rows (rentention, encryption, pii_present, finance_data, data_steward, gpdr, ph_data_privacy)
 * Data Governance set regulation on each data (handle, role, owners, custodians, domain, classification and sensitivity)
-* Data Lifecycle (ingestion, staging, process, archive, retension, deletions, data lineage)
+* Data management
 
 ---
 
