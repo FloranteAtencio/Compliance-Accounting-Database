@@ -39,16 +39,16 @@ CREATE TYPE retention_period_enum AS ENUM (
 DROP TABLE IF EXISTS Compliance.compliance_metadata CASCADE;
 CREATE TABLE Compliance.compliance_metadata (
     metadata_id BIGSERIAL PRIMARY KEY,
-    table_name VARCHAR(255) NOT NULL UNIQUE,
-    table_description TEXT,
+    table_name VARCHAR(255) NOT NULL UNIQUE, -- client, customer vendors 
+    table_description TEXT, -- table(Client, vendor, customer) description
     data_classification data_classification_enum NOT NULL,
     retention_period retention_period_enum NOT NULL,
     requires_encryption BOOLEAN DEFAULT FALSE,
     requires_audit_log BOOLEAN DEFAULT TRUE,
     pii_present BOOLEAN DEFAULT FALSE,
     financial_data BOOLEAN DEFAULT FALSE,
-    data_steward VARCHAR(255),
-    compliance_notes TEXT,
+    data_steward VARCHAR(255), -- 
+    compliance_notes TEXT, --
     gdpr_applicable BOOLEAN DEFAULT FALSE,
     ph_pdata_applicable BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -61,9 +61,9 @@ CREATE TABLE Compliance.compliance_metadata (
 DROP TABLE IF EXISTS Compliance.encryption_keys CASCADE;
 CREATE TABLE Compliance.encryption_keys (
     key_id BIGSERIAL PRIMARY KEY,
-    key_name VARCHAR(255) NOT NULL UNIQUE,
+    key_name VARCHAR(255) NOT NULL UNIQUE, -- 
     table_name VARCHAR(255) NOT NULL,
-    column_name VARCHAR(255) NOT NULL,
+    column_name VARCHAR(255) NOT NULL, 
     encryption_algorithm VARCHAR(50),  -- AES-256, etc
     key_rotation_enabled BOOLEAN DEFAULT TRUE,
     key_rotation_interval_days INT DEFAULT 90,

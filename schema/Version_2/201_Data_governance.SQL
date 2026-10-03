@@ -28,6 +28,14 @@ CREATE TABLE governance_v2.owners (
     UNIQUE(role_title, domain_id) -- Prevent duplicate roles per domain
 );
 
+CREATE TABLE governance_v2.steward(
+    steward_id  SERIAL PRIMARY KEY,
+    role_title  TEXT NOT NULL UNIQUE,
+    person_name TEXT 
+    created_at  TIMESTAMPTZ DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 3. Technical Custodians
 -- Added unique constraint on role title
 CREATE TABLE governance_v2.custodians (
@@ -51,6 +59,7 @@ CREATE TABLE governance_v2.catalog (
     domain_id         INT NOT NULL REFERENCES governance_v2.domains(domain_id),
     business_owner_id INT NOT NULL REFERENCES governance_v2.owners(owner_id),
     custodian_id      INT NOT NULL REFERENCES governance_v2.custodians(custodian_id),
+    steward_id        INT NOT NULL REFERENCES governance_v2.steward(steward_id),
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (schema_name, table_name, column_name)
@@ -59,17 +68,23 @@ CREATE TABLE governance_v2.catalog (
 -- 5. Sensitivity Classification
 CREATE TABLE governance_v2.sensitivity (
     sensitivity_id    SERIAL PRIMARY KEY,
-    level             TEXT NOT NULL CHECK (level IN ('Internal','Confidential','Restricted')),
-    is_pii            BOOLEAN DEFAULT FALSE,
-    pii_type          TEXT CHECK (pii_type IN ('Individual', 'Individual/Org', 'Organization', NULL)),
+    level             TEXT NOT NULL CHECK (level IN ('Internal','Confidential','Restricted','Public','Highly Restricted')),
     created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE governance_v2.pii(
+    pii_id      SERIAL PRIMARY KEY,
+    is_pii      BOOLEAN DEFAULT FALSE,
+    pii_type    TEXT CHECK (pii_type IN ('Individual', 'Individual/Org', 'Organization', NULL)),
+    created_at  TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- 6. Column Classification (Enforced 1:1)
 -- PK is now just catalog_id. A column can only have ONE classification.
 CREATE TABLE governance_v2.column_classification (
     catalog_id     INT PRIMARY KEY REFERENCES governance_v2.catalog(catalog_id) ON DELETE CASCADE,
-    sensitivity_id INT NOT NULL REFERENCES governance_v2.sensitivity(sensitivity_id)
+    sensitivity_id INT NOT NULL REFERENCES governance_v2.sensitivity(sensitivity_id),
+    pii_id         INT NOT NULL REFERENCES governance_v2.pii(pii_id)
 );
 
 -- 1. Add enforcement columns to governance's classification
@@ -97,7 +112,8 @@ CREATE TABLE governance_v2.handling (
     handling_id    SERIAL PRIMARY KEY,
     rule           TEXT NOT NULL,
     sensitivity_id INT REFERENCES governance_v2.sensitivity(sensitivity_id),
-    catalog_id     INT    REFERENCES governance_v2.catalog(catalog_id),
+    pii_id         INT REFERENCES governance_v2.pii(pii_id),
+    catalog_id     INT REFERENCES governance_v2.catalog(catalog_id),
     created_at     TIMESTAMPTZ DEFAULT NOW(),
     CHECK (sensitivity_id IS NOT NULL OR catalog_id IS NOT NULL)
 );
@@ -144,6 +160,7 @@ CREATE TABLE governance_v2.access_review_items (
     decision     TEXT CHECK (decision IN ('APPROVED','REVOKED','MODIFIED')),
     notes        TEXT
 );
+
 -- Data Policy
 CREATE TABLE governance_v2.data_standards (
     standard_id   SERIAL PRIMARY KEY,
