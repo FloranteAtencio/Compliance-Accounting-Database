@@ -202,6 +202,9 @@ BEGIN
             -- 8. Log State Change
             PERFORM Audit.record_state_change(new_transaction_id, p_clientId, 'VALIDATED', 'For Approval', current_user::VARCHAR, 'Account Receivables successful draft!');
             
+            -- 9. Record_lineage
+            PERFORM Audit.record_lineage_entry()
+
             EXIT; -- Success
             
         EXCEPTION

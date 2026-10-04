@@ -15,13 +15,36 @@ CREATE TABLE IF NOT EXISTS management.data_inventory (
     -- LINK TO GOVERNANCE
     domain_id INT REFERENCES governance_v2.domains(domain_id),
     
-    lifecycle_stage VARCHAR(50),
-    source_system VARCHAR(150),
+    lifecycle_id INT REFERENCES management.lifecycle_stage(lifecycle_id),
+    source_id INT REFERENCES management.source_system(source_id),
     contains_personal_data BOOLEAN DEFAULT FALSE,
     
     -- LEVEL 14: DATA RESIDENCY (Where is this data stored?)
     residency_country_code CHAR(2), -- e.g., 'PH', 'US'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS management.lifecycle_stage(
+    lifecycle_id BIGSERIAL PRIMARY KEY,
+    stage VARCHAR(50) CHECK(Stage IN ('Active','Inactive','N/A'))
+    owner VARCHAR(50),
+    retention_period VARCHAR(50),
+    archive DATE,
+    archive_Status VARCHAR(50) CHECK( archive_Status IN ('Active','Inactive','N/A')),
+    expiration_date DATE,
+    purge_date DATE,
+    purge_status VARCHAR(50) CHECK( purge_status IN ('Active','Inactive','N/A')),
+    legal_hold  VARCHAR(50)
+);
+
+CREATE TABLE IF NOT EXISTS management.source_system(
+    source_id BIGSERIAL PRIMARY KEY,
+    source_system VARCHAR(50),
+    source_table VARCHAR(50),
+    source_column VARCHAR(50),
+    tranformation_rule TEXT,
+    destination_table VARCHAR(50),
+    destination_column VARCHAR(50)
 );
 
 CREATE TABLE management.dataset_table_map (
