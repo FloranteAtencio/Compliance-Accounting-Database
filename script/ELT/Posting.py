@@ -3,48 +3,40 @@ import json
 import csv
 import os
 import sys
+import config as conf
 
-from dotenv import load_dotenv
-load_dotenv (dotenv_path='.env.prod')
-
-db_password=os.getenv('POSTGRES_PASSWORD')
-db_name = os.getenv('POSTGRES_DB')
-db_user = os.getenv('POSTGRES_USER')
-
-session_id = 1
-
-conn = psycopg2.connect(
-    host="localhost",
-    database=db_name, 
-    user=db_user, 
-    password=db_password, 
-    port=5432
-)
-session_id = 1
+def call_main(session_id):
+    conn = psycopg2.connect(
+        host=conf.SETTINGS["database"]["host"],
+        database=conf.SETTINGS["database"]["database"],
+        user=conf.SETTINGS["database"]["user"],
+        password=conf.SETTINGS["database"]["password"],
+        port=conf.SETTINGS["database"]["port"]
+    )
 
 
-cur = conn.cursor()
-try:
-    print(f"🦽 Pending Validations Start!")
-    try:        
-        cur.execute(" CALL staging.import_workflow_posting(1)",
-                (session_id,)
-                )
-        conn.commit()
-        print(f"🎉 Validation Complete !")
-    except Exception as inner_e:
-        print(f"⚠️  procedure fail : {inner_e}")
-            
-except Exception as e:
-    err_message = str(e)
-    print(f"⚠️  Failed : {err_message}")
+    cur = conn.cursor()
+    cur.execute("SET LOCAL app.import_source_file = 'data.csv'")
 
-finally:
+    try:
+        print(f"🦽 Pending Posting Start!")
+        try:        
+            cur.execute(" CALL staging.import_workflow_posting(%s)",
+                    (session_id,)
+                    )
+            conn.commit()
+            print(f"🎉 Posting Complete !")
+        except Exception as inner_e:
+            print(f"⚠️ Posting procedure fail : {inner_e}")
+                
+    except Exception as e:
+        err_message = str(e)
+        print(f"⚠️  Posting script Failed : {err_message}")
 
-    print(f"🎉 Import Complete! Validations {session_id} ")
+    finally:
 
-    if cur:
-        cur.close()
-    if conn:
-        conn.close()
-    print(" 🔒 Connections Closed")
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
+        print(" 🔒 Connections Closed")
