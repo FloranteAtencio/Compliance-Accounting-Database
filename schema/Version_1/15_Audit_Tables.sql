@@ -124,15 +124,15 @@ CREATE TABLE Audit.transaction_lifecycle (
     client_id INT NOT NULL REFERENCES Finance.clients(client_id) ON DELETE NO ACTION,
     previous_state VARCHAR(50),
     new_state VARCHAR(50) NOT NULL CHECK (new_state IN (
-        'DRAFT', 'SUBMITTED', 'VALIDATED', 'POSTED', 
-        'RECONCILED', 'APPROVED', 'ARCHIVED', 'REJECTED'
+        --'DRAFT',  'VALIDATED', 'APPROVED', 'REJECTED', 'SUBMITTED'
+        'POSTED', 'ARCHIVED', 'DELELTION', 'PURGE'
     )),
     state_reason VARCHAR(255),
     changed_by VARCHAR(100) NOT NULL,
     changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     notes TEXT
 );
-
+-- Payroll service and annual book closing
 DROP TABLE IF EXISTS Audit.approval_chain CASCADE;
 CREATE TABLE Audit.approval_chain (
     approval_id BIGSERIAL PRIMARY KEY,
