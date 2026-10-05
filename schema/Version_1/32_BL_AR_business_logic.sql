@@ -194,13 +194,30 @@ BEGIN
 
             INSERT INTO Finance.ar_ext (amount, due_date, invoice_date, status, receivable_id)
             VALUES (p_Amount, p_DueDate, p_InvoiceDate, p_Status, new_returning_id);
-
-            -- 7. Journal Entries
-            CALL Finance.insert_journal(p_clientId, new_transaction_id, 'cash_account_ar', FALSE, p_Amount, p_InvoiceDate);
-            CALL Finance.insert_journal(p_clientId, new_transaction_id, 'ar_account', TRUE, p_Amount, p_InvoiceDate);
             
+            -- 7. Journal Entries
+            if p_Status IN ('Paid','Partial Paid') THEN
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'cash_account_ar', TRUE, p_Amount, p_InvoiceDate);
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'ar_account', FALSE, p_Amount, p_InvoiceDate);
+            END IF;
+
+            if p_Status IN ('Pending') THEN
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'revenue_account', FALSE, p_Amount, p_InvoiceDate);
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'ar_account', TRUE, p_Amount, p_InvoiceDate);
+            END IF;
+
+            if p_Status IN ('Returned') THEN
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'SR&Allowances', TRUE, p_Amount, p_InvoiceDate);
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'ar_account', FALSE, p_Amount, p_InvoiceDate);
+            END IF;
+    
+            if p_Status IN ('Overdue') THEN
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'ar_overdue', FALSE, p_Amount, p_InvoiceDate);
+                CALL Finance.insert_journal(p_clientId, new_transaction_id, 'ar_account', TRUE, p_Amount, p_InvoiceDate);
+            END IF;
+
             -- 8. Log State Change
-            PERFORM Audit.record_state_change(new_transaction_id, p_clientId, 'VALIDATED', 'For Approval', current_user::VARCHAR, 'Account Receivables successful draft!');
+            PERFORM Audit.record_state_change(new_transaction_id, p_clientId, 'POSTED', 'Account Receivable', current_user::VARCHAR, 'Account Receivables Succesful Posted!');
             
             -- 9. Record_lineage
             PERFORM Audit.record_lineage_entry()

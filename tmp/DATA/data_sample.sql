@@ -70,7 +70,7 @@ BEGIN
     (1, 4300, 'Service Revenue', 'Revenue'),
     (1, 4400, 'Consulting Revenue', 'Revenue'),
     (1, 4500, 'Professional Fees', 'Revenue'),
-    (1, 4600, 'Interest Income', 'Revenue'),
+    --(1, 4600, 'Interest Income', 'Revenue'),
     (1, 4700, 'Rental Income', 'Revenue'),
     (1, 4800, 'Other Income', 'Revenue'),
     --(1, 4900, 'Sales Revenue', 'Revenue'),
@@ -114,6 +114,7 @@ BEGIN
     CALL Finance.assign_account_role ('Cost of Goods Sold','COGS');
     CALL Finance.assign_account_role ('Sales Returns & Allowances','SR&Allowances');
     CALL Finance.assign_account_role ('Purchase Returns & Allowances','PR&Allowances');
+    CALL Finance.assign_account_role ('Interest Income', 'ar_overdue');
     INSERT INTO Finance.products (product_id, product_name, description, product_unit,client_id) VALUES (1000, 'tend', 'Enough piece many send.', 'unit',1);
     INSERT INTO Finance.operations (product_id, quantity, product_cost, product_price, purchase_date) VALUES (1000, 42,41,78,'2025-07-09'); 
     INSERT INTO Finance.products (product_id, product_name, description, product_unit,client_id) VALUES (1001, 'watch', 'Bank enough once interview.', 'unit',1);
