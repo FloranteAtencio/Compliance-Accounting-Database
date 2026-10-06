@@ -6,9 +6,9 @@ BEGIN;
 -- ============================================
 DROP TABLE IF EXISTS Finance.clients CASCADE;
 CREATE TABLE IF NOT EXISTS Finance.clients (
-    client_id SERIAL PRIMARY KEY,
-    info JSONB NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    client_id   SERIAL PRIMARY KEY,
+    legal_name  VARCHAR(255) NOT NULL,
+    created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================
@@ -16,10 +16,10 @@ CREATE TABLE IF NOT EXISTS Finance.clients (
 -- ============================================
 DROP TABLE IF EXISTS Finance.coa_templates CASCADE;
 CREATE TABLE IF NOT EXISTS Finance.coa_templates (
-    template_id SERIAL PRIMARY KEY,
-    template_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    template_id     SERIAL PRIMARY KEY,
+    template_name   VARCHAR(255) NOT NULL,
+    description     TEXT,
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ============================================
