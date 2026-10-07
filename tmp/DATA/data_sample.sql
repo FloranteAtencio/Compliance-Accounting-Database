@@ -10,8 +10,8 @@ BEGIN
 
     SET LOCAL app.allow_direct_insert = 'true';
     
-    INSERT INTO Finance.clients(INFO) VALUES (jsonb_build_object('Name','Default')) RETURNING client_id INTO new_client_id;
-    INSERT INTO Finance.clients(INFO) VALUES (jsonb_build_object('Name','Ezra'));
+    INSERT INTO Finance.clients(legal_name) VALUES ('Default') RETURNING client_id INTO new_client_id;
+    INSERT INTO Finance.clients(legal_name) VALUES ('Ezra');
 
     SET LOCAL app.current_client_id = new_client_id;
 

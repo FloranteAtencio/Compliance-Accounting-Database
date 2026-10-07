@@ -9,8 +9,8 @@ BEGIN;
 -- 1. PERFORMANCE BASELINE TABLES
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.performance_baseline CASCADE;
-CREATE TABLE dba_admin.performance_baseline (
+DROP TABLE IF EXISTS admin_meta.performance_baseline CASCADE;
+CREATE TABLE admin_meta.performance_baseline (
     metric_id SERIAL PRIMARY KEY,
     metric_name VARCHAR(100) NOT NULL UNIQUE,
     baseline_value NUMERIC NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE dba_admin.performance_baseline (
 );
 
 -- Insert baseline metrics
-INSERT INTO dba_admin.performance_baseline (
+INSERT INTO admin_meta.performance_baseline (
     metric_name, baseline_value, alert_threshold, warning_threshold, measurement_unit, notes
 ) VALUES
     ('avg_query_time', 100, 5000, 1000, 'milliseconds', 'Average query execution time'),
@@ -37,8 +37,8 @@ INSERT INTO dba_admin.performance_baseline (
 -- 2. REAL-TIME MONITORING TABLE
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.performance_metrics CASCADE;
-CREATE TABLE dba_admin.performance_metrics (
+DROP TABLE IF EXISTS admin_meta.performance_metrics CASCADE;
+CREATE TABLE admin_meta.performance_metrics (
     metric_id BIGSERIAL PRIMARY KEY,
     metric_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     metric_name VARCHAR(100) NOT NULL,
@@ -49,16 +49,16 @@ CREATE TABLE dba_admin.performance_metrics (
     deviation_percent NUMERIC
 );
 
-CREATE INDEX idx_performance_timestamp ON dba_admin.performance_metrics(metric_timestamp DESC);
-CREATE INDEX idx_performance_metric_name ON dba_admin.performance_metrics(metric_name);
-CREATE INDEX idx_performance_status ON dba_admin.performance_metrics(status);
+CREATE INDEX idx_performance_timestamp ON admin_meta.performance_metrics(metric_timestamp DESC);
+CREATE INDEX idx_performance_metric_name ON admin_meta.performance_metrics(metric_name);
+CREATE INDEX idx_performance_status ON admin_meta.performance_metrics(status);
 
 -- ============================================
 -- 3. SLOW QUERY LOG TABLE
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.slow_query_log CASCADE;
-CREATE TABLE dba_admin.slow_query_log (
+DROP TABLE IF EXISTS admin_meta.slow_query_log CASCADE;
+CREATE TABLE admin_meta.slow_query_log (
     query_id BIGSERIAL PRIMARY KEY,
     query_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     query_text TEXT NOT NULL,
@@ -71,15 +71,15 @@ CREATE TABLE dba_admin.slow_query_log (
     optimization_notes TEXT
 );
 
-CREATE INDEX idx_slow_query_time ON dba_admin.slow_query_log(execution_time_ms DESC);
-CREATE INDEX idx_slow_query_timestamp ON dba_admin.slow_query_log(query_timestamp DESC);
+CREATE INDEX idx_slow_query_time ON admin_meta.slow_query_log(execution_time_ms DESC);
+CREATE INDEX idx_slow_query_timestamp ON admin_meta.slow_query_log(query_timestamp DESC);
 
 -- ============================================
 -- 4. INDEX MONITORING TABLE
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.index_monitoring CASCADE;
-CREATE TABLE dba_admin.index_monitoring (
+DROP TABLE IF EXISTS admin_meta.index_monitoring CASCADE;
+CREATE TABLE admin_meta.index_monitoring (
     index_id SERIAL PRIMARY KEY,
     table_name VARCHAR(100) NOT NULL,
     index_name VARCHAR(100) NOT NULL,
@@ -92,16 +92,16 @@ CREATE TABLE dba_admin.index_monitoring (
     checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_index_monitoring_table ON dba_admin.index_monitoring(table_name);
-CREATE INDEX idx_index_monitoring_unused ON dba_admin.index_monitoring(is_unused);
+CREATE INDEX idx_index_monitoring_table ON admin_meta.index_monitoring(table_name);
+CREATE INDEX idx_index_monitoring_unused ON admin_meta.index_monitoring(is_unused);
 
 -- ============================================
 -- 5. PERFORMANCE MONITORING FUNCTIONS
 -- ============================================
 
 -- Collect current performance metrics
-DROP FUNCTION IF EXISTS dba_admin.collect_performance_metrics() CASCADE;
-CREATE FUNCTION dba_admin.collect_performance_metrics()
+DROP FUNCTION IF EXISTS admin_meta.collect_performance_metrics() CASCADE;
+CREATE FUNCTION admin_meta.collect_performance_metrics()
 RETURNS TABLE(metrics_collected INT, status TEXT) AS $$
 DECLARE
     v_count INT := 0;
@@ -116,7 +116,7 @@ BEGIN
     INTO v_cache_hit
     FROM pg_statio_user_tables;
     
-    INSERT INTO dba_admin.performance_metrics (metric_name, metric_value, measurement_unit, status)
+    INSERT INTO admin_meta.performance_metrics (metric_name, metric_value, measurement_unit, status)
     VALUES ('cache_hit_ratio', COALESCE(v_cache_hit, 100), 'percent', 
             CASE WHEN COALESCE(v_cache_hit, 100) < 90 THEN 'ALERT' 
                  WHEN COALESCE(v_cache_hit, 100) < 95 THEN 'WARNING' 
@@ -125,7 +125,7 @@ BEGIN
     
     -- Active connections
     SELECT COUNT(*) INTO v_connections FROM pg_stat_activity;
-    INSERT INTO dba_admin.performance_metrics (metric_name, metric_value, measurement_unit, status)
+    INSERT INTO admin_meta.performance_metrics (metric_name, metric_value, measurement_unit, status)
     VALUES ('active_connections', v_connections, 'count',
             CASE WHEN v_connections > 50 THEN 'ALERT'
                  WHEN v_connections > 30 THEN 'WARNING'
@@ -137,7 +137,7 @@ BEGIN
         ROUND((pg_database_size('erp_db')::NUMERIC / 
         (SELECT pg_total_relation_size('erp_db'::regclass) * 1.2)) * 100, 2)
     INTO v_disk_usage;
-    INSERT INTO dba_admin.performance_metrics (metric_name, metric_value, measurement_unit, status)
+    INSERT INTO admin_meta.performance_metrics (metric_name, metric_value, measurement_unit, status)
     VALUES ('disk_space_used', COALESCE(v_disk_usage, 0), 'percent',
             CASE WHEN COALESCE(v_disk_usage, 0) > 80 THEN 'ALERT'
                  WHEN COALESCE(v_disk_usage, 0) > 70 THEN 'WARNING'
@@ -149,15 +149,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Analyze index usage and identify unused indexes
-DROP FUNCTION IF EXISTS dba_admin.analyze_index_usage() CASCADE;
-CREATE FUNCTION dba_admin.analyze_index_usage()
+DROP FUNCTION IF EXISTS admin_meta.analyze_index_usage() CASCADE;
+CREATE FUNCTION admin_meta.analyze_index_usage()
 RETURNS TABLE(unused_count INT, bloated_count INT, recommendations_made INT) AS $$
 DECLARE
     v_unused INT := 0;
     v_bloated INT := 0;
 BEGIN
     -- Identify unused indexes
-    INSERT INTO dba_admin.index_monitoring (
+    INSERT INTO admin_meta.index_monitoring (
         table_name, index_name, index_size_mb, scan_count, 
         is_unused, recommendation
     )
@@ -183,8 +183,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Get performance health status
-DROP FUNCTION IF EXISTS dba_admin.get_performance_health_status() CASCADE;
-CREATE FUNCTION dba_admin.get_performance_health_status()
+DROP FUNCTION IF EXISTS admin_meta.get_performance_health_status() CASCADE;
+CREATE FUNCTION admin_meta.get_performance_health_status()
 RETURNS TABLE(
     metric_name VARCHAR,
     current_value NUMERIC,
@@ -202,16 +202,16 @@ BEGIN
         pb.alert_threshold,
         pm.status,
         pm.metric_timestamp
-    FROM dba_admin.performance_metrics pm
-    LEFT JOIN dba_admin.performance_baseline pb ON pm.metric_name = pb.metric_name
+    FROM admin_meta.performance_metrics pm
+    LEFT JOIN admin_meta.performance_baseline pb ON pm.metric_name = pb.metric_name
     WHERE pm.metric_timestamp > CURRENT_TIMESTAMP - INTERVAL '1 hour'
     ORDER BY pm.metric_timestamp DESC;
 END;
 $$ LANGUAGE plpgsql;
 
 -- Find slow queries (uses pg_stat_activity - no extension required)
-DROP FUNCTION IF EXISTS dba_admin.find_slow_queries(INT) CASCADE;
-CREATE FUNCTION dba_admin.find_slow_queries(p_threshold_ms INT DEFAULT 1000)
+DROP FUNCTION IF EXISTS admin_meta.find_slow_queries(INT) CASCADE;
+CREATE FUNCTION admin_meta.find_slow_queries(p_threshold_ms INT DEFAULT 1000)
 RETURNS TABLE(
     query_text TEXT,
     total_time_ms BIGINT,
@@ -237,8 +237,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Analyze query execution plan
-DROP FUNCTION IF EXISTS dba_admin.analyze_query_plan(TEXT) CASCADE;
-CREATE FUNCTION dba_admin.analyze_query_plan(p_query TEXT)
+DROP FUNCTION IF EXISTS admin_meta.analyze_query_plan(TEXT) CASCADE;
+CREATE FUNCTION admin_meta.analyze_query_plan(p_query TEXT)
 RETURNS TABLE(plan_line TEXT) AS $$
 BEGIN
     RETURN QUERY
@@ -251,8 +251,8 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 
 -- Vacuum and analyze all tables
-DROP FUNCTION IF EXISTS dba_admin.optimize_all_tables() CASCADE;
-CREATE FUNCTION dba_admin.optimize_all_tables()
+DROP FUNCTION IF EXISTS admin_meta.optimize_all_tables() CASCADE;
+CREATE FUNCTION admin_meta.optimize_all_tables()
 RETURNS TABLE(table_name VARCHAR, status VARCHAR, duration_seconds INT) AS $$
 DECLARE
     v_table RECORD;

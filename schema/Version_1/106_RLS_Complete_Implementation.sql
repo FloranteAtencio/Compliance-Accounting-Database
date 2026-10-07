@@ -6,54 +6,54 @@
 
 BEGIN;
 
--- ============================================
--- STEP 1: CREATE ROLES (User Management)
--- ============================================
+-- -- ============================================
+-- -- STEP 1: CREATE ROLES (User Management)
+-- -- ============================================
 
--- Admin role (full access, sees everything)
-DROP ROLE IF EXISTS admin_user;
-CREATE ROLE admin_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword123!';
-GRANT ALL PRIVILEGES ON DATABASE erp_db TO admin_user;
+-- -- Admin role (full access, sees everything)
+-- DROP ROLE IF EXISTS admin_user;
+-- CREATE ROLE admin_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword123!';
+-- GRANT ALL PRIVILEGES ON DATABASE erp_db TO admin_user;
 
--- Application user (sees only their client's data)
-DROP ROLE IF EXISTS app_user;
-CREATE ROLE app_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword456!';
+-- -- Application user (sees only their client's data)
+-- DROP ROLE IF EXISTS db_app;
+-- CREATE ROLE db_app WITH LOGIN PASSWORD 'ChangeMeToStrongPassword456!';
 
--- Read-only user (reports, dashboards)
-DROP ROLE IF EXISTS readonly_user;
-CREATE ROLE readonly_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword789!';
+-- -- Read-only user (reports, dashboards)
+-- DROP ROLE IF EXISTS readonly_user;
+-- CREATE ROLE readonly_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword789!';
 
--- Auditor role (sees audit data)
-DROP ROLE IF EXISTS auditor_user;
-CREATE ROLE auditor_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword000!';
+-- -- Auditor role (sees audit data)
+-- DROP ROLE IF EXISTS auditor_user;
+-- CREATE ROLE auditor_user WITH LOGIN PASSWORD 'ChangeMeToStrongPassword000!';
 
--- ============================================
--- STEP 2: GRANT SCHEMA PRIVILEGES
--- ============================================
+-- -- ============================================
+-- -- STEP 2: GRANT SCHEMA PRIVILEGES
+-- -- ============================================
 
--- Grant usage on schemas
-GRANT USAGE ON SCHEMA Finance, Audit, Compliance, Staging TO app_user, readonly_user, auditor_user;
+-- -- Grant usage on schemas
+-- GRANT USAGE ON SCHEMA Finance, Audit, Compliance, Staging TO db_app, readonly_user, auditor_user;
 
--- Grant table privileges to app_user (needed for RLS to work)
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA Finance TO app_user;
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA Audit TO app_user;
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA Compliance TO app_user;
-GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA Staging TO app_user;
+-- -- Grant table privileges to db_app (needed for RLS to work)
+-- GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA Finance TO db_app;
+-- GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA Audit TO db_app;
+-- GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA Compliance TO db_app;
+-- GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA Staging TO db_app;
 
--- Grant only SELECT to readonly_user
-GRANT SELECT ON ALL TABLES IN SCHEMA Finance TO readonly_user;
-GRANT SELECT ON ALL TABLES IN SCHEMA Audit TO readonly_user;
+-- -- Grant only SELECT to readonly_user
+-- GRANT SELECT ON ALL TABLES IN SCHEMA Finance TO readonly_user;
+-- GRANT SELECT ON ALL TABLES IN SCHEMA Audit TO readonly_user;
 
--- Grant audit privileges
-GRANT SELECT ON ALL TABLES IN SCHEMA Audit TO auditor_user;
+-- -- Grant audit privileges
+-- GRANT SELECT ON ALL TABLES IN SCHEMA Audit TO auditor_user;
 
--- Grant function execution
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA Finance TO app_user, readonly_user, auditor_user;
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA Audit TO app_user, auditor_user;
+-- -- Grant function execution
+-- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA Finance TO db_app, readonly_user, auditor_user;
+-- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA Audit TO db_app, auditor_user;
 
--- ============================================
--- STEP 3: CREATE CONTEXT FUNCTION
--- ============================================
+-- -- ============================================
+-- -- STEP 3: CREATE CONTEXT FUNCTION
+-- -- ============================================
 
 -- Get current client from session variable
 DROP FUNCTION IF EXISTS Finance.get_current_client_id() CASCADE;
@@ -114,17 +114,17 @@ ALTER TABLE Compliance.compliance_rules ENABLE ROW LEVEL SECURITY;
 -- Admin users bypass all RLS (optional - comment out for stricter security)
 CREATE POLICY admin_bypass_all ON Finance.clients
     FOR ALL
-    TO admin_user
+    TO role_db_admin
     USING (true);
 
 CREATE POLICY admin_bypass_charts ON Finance.charts
     FOR ALL
-    TO admin_user
+    TO role_db_admin
     USING (true);
 
 CREATE POLICY admin_bypass_transactions ON Finance.transactions
     FOR ALL
-    TO admin_user
+    TO role_db_admin
     USING (true);
 
 -- (Repeat for other critical tables if needed)
@@ -364,29 +364,29 @@ CREATE POLICY ap_ext_insert_for_client ON Finance.ap_ext
 -- Audit logs - restrict by client
 CREATE POLICY audit_logs_select_by_client ON Audit.audit_logs_extended
     FOR SELECT
-    TO app_user
+    TO db_app
     USING (client_id = Finance.get_current_client_id());
 
 CREATE POLICY audit_logs_insert_for_client ON Audit.audit_logs_extended
     FOR INSERT
-    TO app_user
+    TO db_app
     WITH CHECK (client_id = Finance.get_current_client_id());
 
 -- Auditor role sees everything
 CREATE POLICY audit_logs_select_auditor ON Audit.audit_logs_extended
     FOR SELECT
-    TO auditor_user
+    TO db_auditor
     USING (true);
 
 -- Import sessions
 CREATE POLICY import_session_select_by_client ON Audit.import_sessions
     FOR SELECT
-    TO app_user
+    TO db_app
     USING (client_id = Finance.get_current_client_id());
 
 CREATE POLICY import_session_insert_for_client ON Audit.import_sessions
     FOR INSERT
-    TO app_user
+    TO db_app
     WITH CHECK (client_id = Finance.get_current_client_id());
 
 -- ============================================
@@ -395,12 +395,12 @@ CREATE POLICY import_session_insert_for_client ON Audit.import_sessions
 
 CREATE POLICY compliance_logs_select_by_client ON Compliance.compliance_logs
     FOR SELECT
-    TO app_user
+    TO db_app
     USING (client_id = Finance.get_current_client_id());
 
 CREATE POLICY compliance_logs_insert_for_client ON Compliance.compliance_logs
     FOR INSERT
-    TO app_user
+    TO db_app
     WITH CHECK (client_id = Finance.get_current_client_id());
 
 COMMIT;
@@ -414,8 +414,8 @@ COMMIT;
 -- INSERT INTO Finance.clients (client_id, info) VALUES (1, '{"name": "Client A"}');
 -- INSERT INTO Finance.clients (client_id, info) VALUES (2, '{"name": "Client B"}');
 
--- -- 2. Test as app_user for Client A
--- SET ROLE app_user;
+-- -- 2. Test as db_app for Client A
+-- SET ROLE db_app;
 -- SET app.current_client_id = '1';
 -- SELECT * FROM Finance.clients;  -- Should only show client_id = 1
 
