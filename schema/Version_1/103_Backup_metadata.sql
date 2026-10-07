@@ -6,14 +6,14 @@
 BEGIN;
 
 -- Ensure schema exists
-DO $$ BEGIN CREATE SCHEMA IF NOT EXISTS dba_admin; EXCEPTION WHEN duplicate_schema THEN END $$;
+DO $$ BEGIN CREATE SCHEMA IF NOT EXISTS admin_meta; EXCEPTION WHEN duplicate_schema THEN END $$;
 
 -- ============================================
 -- 1. BACKUP METADATA TABLES
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.backup_history CASCADE;
-CREATE TABLE dba_admin.backup_history (
+DROP TABLE IF EXISTS admin_meta.backup_history CASCADE;
+CREATE TABLE admin_meta.backup_history (
 backup_id SERIAL PRIMARY KEY,
 backup_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 backup_type VARCHAR(20) NOT NULL CHECK (backup_type IN ('FULL', 'INCREMENTAL', 'DIFFERENTIAL', 'WAL_SEGMENT')),
@@ -33,16 +33,16 @@ notes TEXT,
 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_backup_date ON dba_admin.backup_history(backup_date DESC);
-CREATE INDEX idx_backup_status ON dba_admin.backup_history(status);
-CREATE INDEX idx_backup_method ON dba_admin.backup_history(backup_method);
+CREATE INDEX idx_backup_date ON admin_meta.backup_history(backup_date DESC);
+CREATE INDEX idx_backup_status ON admin_meta.backup_history(status);
+CREATE INDEX idx_backup_method ON admin_meta.backup_history(backup_method);
 
 -- ============================================
 -- 2. RECOVERY TARGETS (RPO/RTO)
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.rpo_rto_targets CASCADE;
-CREATE TABLE dba_admin.rpo_rto_targets (
+DROP TABLE IF EXISTS admin_meta.rpo_rto_targets CASCADE;
+CREATE TABLE admin_meta.rpo_rto_targets (
 target_id SERIAL PRIMARY KEY,
 database_name VARCHAR(100) NOT NULL UNIQUE,
 rto_minutes INT NOT NULL,
@@ -56,7 +56,7 @@ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Seed data
-INSERT INTO dba_admin.rpo_rto_targets (database_name, rto_minutes, rpo_minutes, backup_frequency_minutes, retention_days, requires_pitr)
+INSERT INTO admin_meta.rpo_rto_targets (database_name, rto_minutes, rpo_minutes, backup_frequency_minutes, retention_days, requires_pitr)
 VALUES
 ('accounting_db', 60, 15, 60, 30, TRUE),
 ('marketing_db', 120, 240, 1440, 14, FALSE) -- Logical backup, less critical
@@ -67,8 +67,8 @@ ON CONFLICT (database_name) DO UPDATE SET updated_at = CURRENT_TIMESTAMP;
 -- ============================================
 
 -- Function to START a backup (called by external script before running pg_dump/basebackup)
-DROP FUNCTION IF EXISTS dba_admin.start_backup_log(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR);
-CREATE FUNCTION dba_admin.start_backup_log(
+DROP FUNCTION IF EXISTS admin_meta.start_backup_log(VARCHAR, VARCHAR, VARCHAR, VARCHAR, VARCHAR);
+CREATE FUNCTION admin_meta.start_backup_log(
 p_database_name VARCHAR,
 p_backup_type VARCHAR,
 p_backup_method VARCHAR,
@@ -79,7 +79,7 @@ RETURNS INT AS $$
 DECLARE
 v_backup_id INT;
 BEGIN
-INSERT INTO dba_admin.backup_history (
+INSERT INTO admin_meta.backup_history (
 database_name, backup_type, backup_method, backup_path, pg_version, status
 ) VALUES (
 p_database_name, p_backup_type, p_backup_method, p_backup_path, p_pg_version, 'IN_PROGRESS'
@@ -93,8 +93,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to COMPLETE a backup (called by external script after success)
-DROP FUNCTION IF EXISTS dba_admin.finish_backup_log(INT, BIGINT, INT, VARCHAR, VARCHAR);
-CREATE FUNCTION dba_admin.finish_backup_log(
+DROP FUNCTION IF EXISTS admin_meta.finish_backup_log(INT, BIGINT, INT, VARCHAR, VARCHAR);
+CREATE FUNCTION admin_meta.finish_backup_log(
 p_backup_id INT,
 p_size_mb BIGINT,
 p_duration_seconds INT,
@@ -103,7 +103,7 @@ p_error_msg VARCHAR DEFAULT NULL
 )
 RETURNS VOID AS $$
 BEGIN
-UPDATE dba_admin.backup_history
+UPDATE admin_meta.backup_history
 SET status = CASE WHEN p_error_msg IS NULL THEN 'SUCCESS' ELSE 'FAILED' END,
 backup_size_mb = p_size_mb,
 backup_duration_seconds = p_duration_seconds,
@@ -119,15 +119,15 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Function to LOG TEST RESTORE
-DROP FUNCTION IF EXISTS dba_admin.log_restore_test(INT, VARCHAR, VARCHAR);
-CREATE FUNCTION dba_admin.log_restore_test(
+DROP FUNCTION IF EXISTS admin_meta.log_restore_test(INT, VARCHAR, VARCHAR);
+CREATE FUNCTION admin_meta.log_restore_test(
 p_backup_id INT,
 p_test_db_name VARCHAR,
 p_status VARCHAR
 )
 RETURNS VOID AS $$
 BEGIN
-UPDATE dba_admin.backup_history
+UPDATE admin_meta.backup_history
 SET restored_at = CURRENT_TIMESTAMP,
 restore_test_status = p_status,
 restore_test_db_name = p_test_db_name
@@ -139,8 +139,8 @@ $$ LANGUAGE plpgsql;
 -- 4. READINESS DASHBOARD
 -- ============================================
 
-DROP FUNCTION IF EXISTS dba_admin.get_backup_recovery_status();
-CREATE FUNCTION dba_admin.get_backup_recovery_status()
+DROP FUNCTION IF EXISTS admin_meta.get_backup_recovery_status();
+CREATE FUNCTION admin_meta.get_backup_recovery_status()
 RETURNS TABLE(
 database_name VARCHAR,
 last_backup_date TIMESTAMP,
@@ -176,8 +176,8 @@ AND MAX(b.restored_at) > CURRENT_TIMESTAMP - INTERVAL '7 days'
 THEN TRUE
 ELSE FALSE
 END
-FROM dba_admin.rpo_rto_targets t
-LEFT JOIN dba_admin.backup_history b ON t.database_name = b.database_name
+FROM admin_meta.rpo_rto_targets t
+LEFT JOIN admin_meta.backup_history b ON t.database_name = b.database_name
 GROUP BY t.database_name, t.rto_minutes, t.rpo_minutes;
 END;
 $$ LANGUAGE plpgsql;
@@ -186,8 +186,8 @@ $$ LANGUAGE plpgsql;
 -- 5. RETENTION POLICY CONFIG
 -- ============================================
 
-DROP TABLE IF EXISTS dba_admin.retention_policy CASCADE;
-CREATE TABLE dba_admin.retention_policy(
+DROP TABLE IF EXISTS admin_meta.retention_policy CASCADE;
+CREATE TABLE admin_meta.retention_policy(
 retention_id SERIAL PRIMARY KEY,
 database_name VARCHAR(100) NOT NULL,
 retention_days INT NOT NULL DEFAULT 30,
@@ -201,7 +201,7 @@ updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Example: Grandfather-Father-Son (GFS) strategy
-INSERT INTO dba_admin.retention_policy (database_name, keep_daily, keep_weekly, keep_monthly, reason)
+INSERT INTO admin_meta.retention_policy (database_name, keep_daily, keep_weekly, keep_monthly, reason)
 VALUES ('accounting_db', 7, 4, 12, 'GFS Strategy for Compliance');
 
 COMMIT;
@@ -223,7 +223,7 @@ BACKUP_FILE="${BACKUP_PATH}/${DB_NAME}_${TIMESTAMP}.dump"
 
 # 1. Log Start to SQL
 
-BACKUP_ID=$(psql -d postgres -t -c "SELECT dba_admin.start_backup_log('${DB_NAME}', 'FULL', 'LOGICAL', '${BACKUP_FILE}', '15.4');")
+BACKUP_ID=$(psql -d postgres -t -c "SELECT admin_meta.start_backup_log('${DB_NAME}', 'FULL', 'LOGICAL', '${BACKUP_FILE}', '15.4');")
 
 # 2. Run Actual Backup
 
